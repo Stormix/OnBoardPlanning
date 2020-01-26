@@ -1,0 +1,6 @@
+*.env
+__pycache__
+drivers/*
+downloads/*
+auth/**
+*.ics
