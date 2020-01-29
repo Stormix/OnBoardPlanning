@@ -55,7 +55,7 @@ class Extractor:
         # Check which operating system is being used !
         if platform == "linux" or platform == "linux2":
             # linux
-            chrome_driver = currentfolder+"/drivers/chromedriver"
+            chrome_driver = currentfolder+"/../drivers/chromedriver"
         elif platform == "win32":
             # Windows
             chrome_driver = "drivers/chromedriver.exe"
@@ -65,13 +65,18 @@ class Extractor:
             "download.default_directory": currentfolder,
             'profile.default_content_setting_values.automatic_downloads': 2,
         })
+        options.add_argument("start-maximized") # open Browser in maximized mode
+        options.add_argument("disable-infobars") # disabling infobars
+        options.add_argument("--disable-extensions") # disabling extensions
+        options.add_argument("--disable-gpu") # applicable to windows os only
+        options.add_argument("--disable-dev-shm-usage") # overcome limited resource problems
+        options.add_argument("--no-sandbox") # Bypass OS security model
         if(headless):
             options.add_argument('headless')
             options.add_argument('window-size=1280,800')
             options.add_argument('disable-gpu')
             options.add_argument('allow-insecure-localhost')
-        self.browser = webdriver.Chrome(
-            executable_path=chrome_driver, chrome_options=options)
+        self.browser = webdriver.Chrome(chrome_options=options)
         self.browser.get(self.url)
         print("Browser Initiated !")
         print("Loading .. " + self.url, end=' ')
