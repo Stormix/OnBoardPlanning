@@ -4,3 +4,4 @@ drivers/*
 downloads/*
 auth/**
 *.ics
+api

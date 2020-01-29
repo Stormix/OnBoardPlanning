@@ -15,6 +15,7 @@ import time
 from sys import platform
 import re
 from datetime import datetime
+import shutil
 
 # Import self.browser modules
 
@@ -66,6 +67,9 @@ class Extractor:
         })
         if(headless):
             options.add_argument('headless')
+            options.add_argument('window-size=1280,800')
+            options.add_argument('disable-gpu')
+            options.add_argument('allow-insecure-localhost')
         self.browser = webdriver.Chrome(
             executable_path=chrome_driver, chrome_options=options)
         self.browser.get(self.url)
@@ -111,9 +115,11 @@ class Extractor:
             element.click()
             time.sleep(self.delay)
         except NoSuchElementException as e:
+            print("Failed to goToPlanning(): NoSuchElement")
             time.sleep(self.delay)
             self.goToPlanning()
         except ElementNotVisibleException as e:
+            print("Failed to goToPlanning(): ElementNotVisible")
             time.sleep(self.delay)
             self.goToPlanning()
 
@@ -124,12 +130,13 @@ class Extractor:
             element.click()
             time.sleep(self.delay)
         except NoSuchElementException as e:
+            print("Failed to goToSchedule(): NoSuchElement")
             time.sleep(self.delay)
             self.goToSchedule()
         except ElementNotVisibleException as e:
+            print("Failed to goToSchedule(): ElementNotVisible")
             time.sleep(self.delay)
             self.goToSchedule()
-          
 
     def displayMonth(self):
         try:
@@ -138,19 +145,25 @@ class Extractor:
             element.click()
             time.sleep(self.delay)
         except NoSuchElementException as e:
+            print("Failed to displayMonth(): NoSuchElement")
             time.sleep(self.delay)
             self.displayMonth()
 
-    def monthPlanning(self):
+    def monthPlanning(self, filename):
         try:
             element = self.browser.find_element_by_xpath(
                 "//*[@title='Download']")
             element.click()
             time.sleep(self.delay)
+            return self.moveToDownloads(filename)
         except NoSuchElementException as e:
+            print("Failed to monthPlanning(): NoSuchElement")
             return False
-    def moveToDownloads(self):
-      filename = "planning.ics"
-      os.rename("planning.ics", "../downloads/{}".format(filename))
+
+    def moveToDownloads(self, filename):
+        print("Saving planning.ics to downloads/{}".format(filename))
+        shutil.move("src/planning.ics", "downloads/{}".format(filename))
+        return "downloads/{}".format(filename)
+
     def refresh(self):
         self.browser.refresh()
