@@ -34,7 +34,6 @@ def not_found(error):
 
 @app.route('/api/extract', methods=['POST'])
 def extract():
-    print(request.json)
     if not request.json or not 'name' in request.json  or not 'username' in request.json or not 'password' in request.json:
         abort(400)
     name = request.json['name']
@@ -43,13 +42,15 @@ def extract():
     filename = username+".ics"
     e = Extractor(name, username, password)
     e.delay = 2
-    e.launchBrowser() # TODO debug headless mode
+    e.launchBrowser()  # TODO debug headless mode
     e.login()
     e.goToPlanning()
     e.goToSchedule()
     e.displayMonth()
     path = e.monthPlanning(filename)
     e.browser.close()
+    e.browser.quit()
+    e.display.stop()
     try:
       return send_file(path, attachment_filename=filename)
     except Exception as e:
@@ -57,10 +58,10 @@ def extract():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0", port=3333)
+    app.run(debug=True, host="0.0.0.0", port=3000)
 
 
-# 
+#
 # from src import Planner
 
 # name = os.getenv("NAME")

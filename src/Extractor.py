@@ -12,10 +12,11 @@ import inspect
 import sys
 import os
 import time
-from sys import platform
 import re
-from datetime import datetime
 import shutil
+from sys import platform
+from datetime import datetime
+from pyvirtualdisplay import Display
 
 # Import self.browser modules
 
@@ -26,6 +27,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import ElementNotVisibleException
+from selenium.common.exceptions import ElementNotInteractableException
+from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.webdriver.common.keys import Keys
 
 
@@ -39,6 +42,8 @@ class Extractor:
     login_button_class = "bouton-connexion"
     browser = None
     name = None
+    display = None
+    currentfolder = None
 
     def __init__(self, name, email, password):
         self.name = name
@@ -51,31 +56,22 @@ class Extractor:
 
     def launchBrowser(self, headless=False):
         # Initiate the self.browser webdriver
-        currentfolder = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
-        # Check which operating system is being used !
-        if platform == "linux" or platform == "linux2":
-            # linux
-            chrome_driver = currentfolder+"/../drivers/chromedriver"
-        elif platform == "win32":
-            # Windows
-            chrome_driver = "drivers/chromedriver.exe"
-        print("Chrome Driver Location : "+chrome_driver)
+        self.display = Display(visible=0, size=(1280, 768))
+        self.display.start()
+        print('Initialized virtual display..')
+        self.currentfolder = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
         options = webdriver.ChromeOptions()
         options.add_experimental_option("prefs", {
-            "download.default_directory": currentfolder,
+            "download.default_directory": self.currentfolder,
             'profile.default_content_setting_values.automatic_downloads': 2,
         })
+        options.add_argument("--no-sandbox")
         options.add_argument("start-maximized") # open Browser in maximized mode
         options.add_argument("disable-infobars") # disabling infobars
         options.add_argument("--disable-extensions") # disabling extensions
         options.add_argument("--disable-gpu") # applicable to windows os only
         options.add_argument("--disable-dev-shm-usage") # overcome limited resource problems
         options.add_argument("--no-sandbox") # Bypass OS security model
-        if(headless):
-            options.add_argument('headless')
-            options.add_argument('window-size=1280,800')
-            options.add_argument('disable-gpu')
-            options.add_argument('allow-insecure-localhost')
         self.browser = webdriver.Chrome(chrome_options=options)
         self.browser.get(self.url)
         print("Browser Initiated !")
@@ -116,6 +112,7 @@ class Extractor:
 
     def goToPlanning(self):
         try:
+            print('Going to planning...')
             element = self.browser.find_element_by_xpath(
                 "//*[contains(text(), 'Planning')]")
             element.click()
@@ -128,9 +125,18 @@ class Extractor:
             print("Failed to goToPlanning(): ElementNotVisible")
             time.sleep(self.delay)
             self.goToPlanning()
+        except ElementNotInteractableException as e:
+            print("Failed to goToPlanning(): ElementNotInteractableException")
+            time.sleep(self.delay)
+            self.goToPlanning()
+        except ElementClickInterceptedException as e:
+            print("Failed to goToPlanning(): ElementClickInterceptedException")
+            time.sleep(self.delay)
+            self.goToPlanning()
 
     def goToSchedule(self):
         try:
+            print('Getting schedule..')
             element = self.browser.find_element_by_xpath(
                 "//*[contains(text(), 'My schedule')]")
             element.click()
@@ -146,6 +152,7 @@ class Extractor:
 
     def displayMonth(self):
         try:
+            print('Opening the month planning...')
             element = self.browser.find_element_by_xpath(
                 "//*[contains(text(), 'Month')]")
             element.click()
@@ -157,6 +164,7 @@ class Extractor:
 
     def monthPlanning(self, filename):
         try:
+            print('Downloading the month planning...')
             element = self.browser.find_element_by_xpath(
                 "//*[@title='Download']")
             element.click()
@@ -168,7 +176,8 @@ class Extractor:
 
     def moveToDownloads(self, filename):
         print("Saving planning.ics to downloads/{}".format(filename))
-        shutil.move("src/planning.ics", "downloads/{}".format(filename))
+        shutil.move(f"{self.currentfolder}/planning.ics",
+                    f"{self.currentfolder}/../downloads/{filename}")
         return "downloads/{}".format(filename)
 
     def refresh(self):
