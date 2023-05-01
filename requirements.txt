@@ -1,4 +1,4 @@
-Flask==1.1.1
+Flask==2.3.2
 Flask-HTTPAuth==3.3.0
 selenium==3.141.0
 python-dotenv==0.10.5
